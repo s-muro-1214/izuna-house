@@ -1,0 +1,102 @@
+services:
+
+  paper:
+    container_name: mc_paper
+    image: itzg/minecraft-server:java21
+    tty: true
+    stdin_open: true
+    environment:
+      ENABLE_ROLLING_LOGS: true
+      TYPE: paper
+      PAPER_CHANNEL: experimental
+      EULA: true
+        #      VERSION: latest
+      MEMORY: 10G
+      JVM_XX_OPTS: "-XX:+UseG1GC -XX:+ParallelRefProcEnabled -XX:MaxGCPauseMillis=200 -XX:+UnlockExperimentalVMOptions -XX:+DisableExplicitGC -XX:+AlwaysPreTouch -XX:G1HeapWastePercent=5 -XX:G1MixedGCCountTarget=4 -XX:G1MixedGCLiveThresholdPercent=90 -XX:G1RSetUpdatingPauseTimePercent=5 -XX:SurvivorRatio=32 -XX:+PerfDisableSharedMem -XX:MaxTenuringThreshold=1 -XX:G1NewSizePercent=40 -XX:G1MaxNewSizePercent=50 -XX:G1HeapRegionSize=16M -XX:G1ReservePercent=15 -XX:InitiatingHeapOccupancyPercent=20"
+      JVM_DD_OPTS: "-Dusing.aikars.flags=https://mcflags.emc.gs -Daikars.new.flags=true"
+      MOTD: "Izuna's Minecraft Paper Server"
+      MAX_PLAYERS: 8
+      GAMEMODE: survival
+      FORCE_GAMEMODE: true
+      DIFFICULTY: normal
+      SPAWN_PROTECTION: 4
+      TZ: Asia/Tokyo
+      ENABLE_COMMAND_BLOCK: true
+      SNOOPER_ENABLED: false
+      VIEW_DISTANCE: 12
+      PVP: false
+      ONLINE_MODE: true
+      ALLOW_FLIGHT: true
+      USE_NATIVE_TRANSPORT: true
+      STOP_SERVER_ANNOUNCE_DELAY: 60
+      GUI: false
+      PLUGINS: |
+        https://github.com/sladkoff/minecraft-prometheus-exporter/releases/download/v3.1.0/minecraft-prometheus-exporter-3.1.0.jar
+      SERVER_PORT: 25565 
+      ENABLE_WHITELIST: true
+    ports:
+      - 8000:8000
+      - 8123:8123
+      - 9940:9940
+      - 25565:25565
+    volumes:
+      - ./paper:/data
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/group:/etc/group:ro
+      - /etc/passwd:/etc/passwd:ro
+    restart: unless-stopped
+    networks:
+      - mysql-network
+    depends_on:
+      mysql:
+        condition: service_healthy
+  paper-backups:
+    container_name: mc_paper_bk
+    image: itzg/mc-backup
+    environment:
+      BACKUP_NAME: "paper"
+      BACKUP_INTERVAL: "12h"
+      PRUNE_BACKUPS_DAYS: 5
+      PAUSE_IF_NO_PLAYERS: "true"
+      PLAYERS_ONLINE_CHECK_INTERVAL: "5m"
+      INITIAL_DELAY: "2m"
+      RCON_HOST: paper
+    depends_on:
+      - paper
+    volumes:
+      - ./paper:/data:ro
+      - ./backups:/backups
+      - /etc/timezone:/etc/timezone:ro
+    restart: unless-stopped
+    network_mode: "service:paper"
+  node-exporter:
+    image: prom/node-exporter
+    container_name: node-exporter
+    ports:
+      - 9100:9100
+    volumes:
+      - /proc:/host/proc
+      - /sys:/host/sys
+      - /:/rootfs
+    restart: always
+  mysql:
+    image: mysql
+    container_name: mysql
+    expose:
+      - 3306
+    environment:
+      MYSQL_ROOT_PASSWORD: ないしょｗ
+      TZ: Asia/Tokyo
+    volumes:
+      - db-store:/var/lib/mysql
+      - ./mysql/my.cnf:/etc/mysql/conf.d/my.cnf
+    networks:
+      - mysql-network
+    healthcheck:
+      test: mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD
+
+volumes:
+  db-store:
+
+networks:
+  mysql-network:

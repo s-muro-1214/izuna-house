@@ -27,7 +27,7 @@ openweather_snow1h = Gauge("openweather_snow1h", "Snow volume for last hour, in 
 openweather_currentconditions = Gauge("openweather_currentconditions", "Current weather conditions", ["location", "description", "icon"])
 
 # Setup the Open-Meteo API client with cache and retry on error
-cache_session = requests_cache.CachedSession('.cache', expire_after = 3600)
+cache_session = requests_cache.CachedSession('.cache', expire_after = 300)
 retry_session = retry(cache_session, retries = 5, backoff_factor = 0.2)
 
 load_dotenv()

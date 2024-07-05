@@ -14,7 +14,7 @@ switchbot_api_calls_total = Counter("switchbot_api_calls_total", "Number of API 
 switchbot_curtain_battery = Gauge("switchbot_curtain_battery", "Battery Percentage", ["DeviceID"])
 
 # Setup the Open-Meteo API client with cache and retry on error
-cache_session = requests_cache.CachedSession('.cache', expire_after = 3600)
+cache_session = requests_cache.CachedSession('.cache', expire_after = 300)
 retry_session = retry(cache_session, retries = 5, backoff_factor = 0.2)
 
 load_dotenv()

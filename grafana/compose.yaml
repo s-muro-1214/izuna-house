@@ -1,0 +1,27 @@
+services:
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    hostname: prometheus
+    volumes:
+      - ./prometheus:/etc/prometheus
+      - metrics_data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yaml"
+    ports:
+      - 9090:9090
+    restart: always
+  remo-exporter:
+    image: kenfdev/remo-exporter:latest
+    container_name: remo-exporter
+    ports:
+      - 9352:9352
+    environment:
+      OAUTH_TOKEN_FILE: '/run/secrets/api-keys'
+    volumes:
+      - ./remo-api-keys:/run/secrets/api-keys
+    restart: always
+
+volumes:
+  metrics_data:
+    external: true
